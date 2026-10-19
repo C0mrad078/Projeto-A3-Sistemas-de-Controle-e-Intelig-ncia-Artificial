@@ -33,12 +33,10 @@ from .export import (
 )
 from .maze import MAX_OBSTACLES, MIN_OBSTACLES, Maze
 from .models import SearchResult
-from .replay import EXPLORATION_PHASE, PHYSICAL_PHASE, Replay, build_replay, next_index, previous_index
+from .replay import EXPLORATION_PHASE, Replay, build_replay
 from .scenarios import (
-    CELL_KINDS,
     EDITOR_TOOLS,
     GENERATION_MODES,
-    apply_cell_edit,
     apply_tool_edit,
     config_from_json,
     config_to_json,
@@ -431,7 +429,14 @@ def _render_result_card(column, result: SearchResult | None, algorithm: str) -> 
 
 def _render_overview() -> None:
     maze = st.session_state.maze
+    st.header("Criar Cenário")
     _render_scenario_metadata(maze)
+    st.header("Personalização")
+    st.caption(
+        f"Personagem: {st.session_state.selected_character} · "
+        f"Tema: {st.session_state.selected_theme}. "
+        "Essas escolhas são estéticas e não alteram a busca."
+    )
     _render_custom_editor()
     st.checkbox("Mostrar células exploradas", key="overview_show_explored")
     selected = st.session_state.active_result
@@ -517,6 +522,8 @@ def _render_comparison_paths() -> None:
     if comparison is None:
         st.info("Use 'Comparar algoritmos' para executar BFS e A* no mesmo cenário.")
         return
+    st.header("Simulação")
+    st.subheader("Exploração da IA e percurso físico")
     controls = st.columns(7)
     if controls[0].button("▶ Iniciar animação", key="animation_start"):
         st.session_state.animation_phase = "exploração"
@@ -589,6 +596,7 @@ def _render_performance() -> None:
     if len(results) < 2:
         st.info("Execute a comparação para visualizar o desempenho dos dois algoritmos.")
         return
+    st.header("Análise de Resultados")
     figures = performance_figures(results)
     for left_key, right_key in (("estados", "tempo"), ("movimentos", "energia")):
         columns = st.columns(2)
