@@ -171,20 +171,20 @@ def _sidebar() -> None:
     )
     st.sidebar.divider()
 
-    if st.sidebar.button("🧩 Gerar labirinto", use_container_width=True):
+    if st.sidebar.button("🧩 Gerar labirinto", width="stretch"):
         st.session_state.maze = Maze.generate(
             seed=int(st.session_state.maze_seed),
             obstacle_count=int(st.session_state.obstacle_count),
         )
         _clear_execution_state()
 
-    if st.sidebar.button("▶ Executar BFS", use_container_width=True):
+    if st.sidebar.button("▶ Executar BFS", width="stretch"):
         _run_single_algorithm("BFS")
 
-    if st.sidebar.button("▶ Executar A*", use_container_width=True):
+    if st.sidebar.button("▶ Executar A*", width="stretch"):
         _run_single_algorithm("A*")
 
-    if st.sidebar.button("⚖ Comparar algoritmos", use_container_width=True):
+    if st.sidebar.button("⚖ Comparar algoritmos", width="stretch"):
         maze = st.session_state.maze
         st.session_state.comparison_results = {
             "BFS": breadth_first_search(maze),
@@ -280,9 +280,9 @@ def _render_experiments_tab() -> None:
 
     frame = records_to_dataframe(records)
     summary = comparison_summary(frame)
-    st.dataframe(frame, use_container_width=True, hide_index=True)
+    st.dataframe(frame, width="stretch", hide_index=True)
     st.markdown("#### Médias e taxa de sucesso")
-    st.dataframe(summary, use_container_width=True, hide_index=True)
+    st.dataframe(summary, width="stretch", hide_index=True)
 
     figure = build_comparison_figure(frame)
     _render_figure(figure)
