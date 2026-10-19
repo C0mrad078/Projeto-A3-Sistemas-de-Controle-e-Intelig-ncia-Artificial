@@ -38,6 +38,11 @@ def figure_to_png_bytes(figure: Figure, *, dpi: int = 150) -> bytes:
     return output.getvalue()
 
 
+def plotly_figure_to_png_bytes(figure) -> bytes:
+    """Serializa um gráfico Plotly em PNG usando Kaleido."""
+    return figure.to_image(format="png")
+
+
 def save_experiment_csv(
     records: Iterable[ExperimentRecord],
     *,
