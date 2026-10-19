@@ -9,6 +9,7 @@ from src.scenarios import (
     config_from_json,
     config_to_json,
     custom_scenario,
+    custom_validation,
     generate_scenario,
 )
 
@@ -84,3 +85,12 @@ def test_editor_tools_preserve_recharges_when_removing_only_an_obstacle() -> Non
 
     assert (1, 1) not in edited.obstacles
     assert edited.recharges[(1, 2)] == 5
+
+
+def test_custom_validation_reports_all_missing_requirements() -> None:
+    valid, errors = custom_validation(Maze(rows=10, cols=10, start=START, goal=GOAL))
+
+    assert not valid
+    assert any("mínimo permitido é 10" in error for error in errors)
+    assert any("+5" in error for error in errors)
+    assert any("+10" in error for error in errors)
