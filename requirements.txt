@@ -2,5 +2,5 @@ streamlit>=1.40
 pandas>=2.0
 matplotlib>=3.8
 plotly>=5.24
-kaleido>=0.2.1,<1.0
+kaleido>=1.0
 pytest>=8.0
