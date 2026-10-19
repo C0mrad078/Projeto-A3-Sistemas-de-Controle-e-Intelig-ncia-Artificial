@@ -34,3 +34,22 @@ def test_renderer_contains_virtual_expansion_and_physical_path_layers() -> None:
     assert len(axis.lines) == 1
     assert len(axis.collections) >= 3
     plt.close(figure)
+
+
+def test_renderer_accepts_all_themes_and_characters_without_changing_grid_size() -> None:
+    from src.visual_config import CHARACTERS, THEMES
+
+    maze = Maze(rows=10, cols=10, start=(0, 0), goal=(9, 9))
+    for theme in THEMES:
+        for character in CHARACTERS:
+            figure = render_maze(
+                maze,
+                theme=theme,
+                character=character,
+                robot_position=(0, 0),
+                energy=30,
+                recharge_effect_position=(0, 0),
+                selected_position=(1, 1),
+            )
+            assert len(figure.axes[0].patches) == 101
+            plt.close(figure)
