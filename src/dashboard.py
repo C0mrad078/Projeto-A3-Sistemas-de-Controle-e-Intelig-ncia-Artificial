@@ -35,8 +35,10 @@ from .maze import MAX_OBSTACLES, MIN_OBSTACLES, Maze
 from .models import SearchResult
 from .scenarios import (
     CELL_KINDS,
+    EDITOR_TOOLS,
     GENERATION_MODES,
     apply_cell_edit,
+    apply_tool_edit,
     config_from_json,
     config_to_json,
     custom_scenario,
@@ -74,6 +76,11 @@ def _initialize_session_state() -> None:
         "active_result": None,
         "custom_editor_maze": None,
         "custom_base_maze": None,
+        "editor_tool": "Selecionar célula",
+        "selected_editor_cell": None,
+        "editor_history": [],
+        "editor_redo": [],
+        "scenario_modified": False,
         "saved_custom_json": None,
         "animation_phase": "exploração",
         "animation_index": 0,
@@ -169,6 +176,10 @@ def _generate_from_controls() -> None:
         st.session_state.maze = scenario.maze
         st.session_state.custom_base_maze = None
         st.session_state.custom_editor_maze = None
+    st.session_state.editor_history = []
+    st.session_state.editor_redo = []
+    st.session_state.selected_editor_cell = None
+    st.session_state.scenario_modified = False
     _clear_execution_state()
 
 
@@ -249,6 +260,29 @@ def _render_custom_editor() -> None:
         "Clique nas células para alternar Livre → Obstáculo → +5 → +10. "
         "A entrada e a saída permanecem protegidas."
     )
+    st.selectbox("Ferramenta", EDITOR_TOOLS, key="editor_tool")
+    history_columns = st.columns(2)
+    if history_columns[0].button("↶ Desfazer", key="editor_undo"):
+        if st.session_state.editor_history:
+            st.session_state.editor_redo.append(maze)
+            previous = st.session_state.editor_history.pop()
+            st.session_state.custom_editor_maze = previous
+            st.session_state.maze = previous
+            st.session_state.scenario_modified = True
+            _clear_execution_state()
+            maze = previous
+    if history_columns[1].button("↷ Refazer", key="editor_redo_action"):
+        if st.session_state.editor_redo:
+            st.session_state.editor_history.append(maze)
+            following = st.session_state.editor_redo.pop()
+            st.session_state.custom_editor_maze = following
+            st.session_state.maze = following
+            st.session_state.scenario_modified = True
+            _clear_execution_state()
+            maze = following
+    selected = st.session_state.selected_editor_cell
+    if selected is not None:
+        st.caption(f"Célula selecionada: ({selected[0] + 1},{selected[1] + 1})")
     for row in range(10):
         columns = st.columns(10, gap="small")
         for col, column in enumerate(columns):
@@ -263,19 +297,26 @@ def _render_custom_editor() -> None:
                 label, kind = f"+{value}", f"Recarga +{value}"
             else:
                 label, kind = "·", "Livre"
-            next_kind = CELL_KINDS[(CELL_KINDS.index(kind) + 1) % len(CELL_KINDS)]
+            if selected == position:
+                label = f"[{label}]"
             if column.button(
                 label,
                 key=f"editor_cell_{row}_{col}",
-                help=f"Linha {row + 1}, coluna {col + 1}: {kind}. Próximo: {next_kind}.",
+                help=f"Linha {row + 1}, coluna {col + 1}: {kind}.",
                 width="stretch",
             ):
                 try:
-                    edited_maze = apply_cell_edit(
-                        maze, position, next_kind
-                    )
+                    st.session_state.selected_editor_cell = position
+                    if st.session_state.editor_tool == "Selecionar célula":
+                        continue
+                    edited_maze = apply_tool_edit(maze, position, st.session_state.editor_tool)
+                    if edited_maze == maze:
+                        continue
+                    st.session_state.editor_history.append(maze)
+                    st.session_state.editor_redo = []
                     st.session_state.custom_editor_maze = edited_maze
                     st.session_state.maze = edited_maze
+                    st.session_state.scenario_modified = True
                     _clear_execution_state()
                 except ValueError as error:
                     st.warning(str(error))
@@ -285,6 +326,12 @@ def _render_custom_editor() -> None:
         st.success("Configuração válida: pronta para executar os algoritmos.")
     else:
         st.warning("Configuração temporariamente incompleta: " + " ".join(errors))
+    st.caption(
+        f"Obstáculos: {len(edited.obstacles)}/10–25 · "
+        f"Recargas +5: {sum(value == 5 for value in edited.recharges.values())}/5 · "
+        f"Recargas +10: {sum(value == 10 for value in edited.recharges.values())}/3 · "
+        f"{'Cenário modificado manualmente' if st.session_state.scenario_modified else 'Cenário gerado'}"
+    )
     actions = st.columns(4)
     with actions[0]:
         if st.button("Salvar cenário", key="save_custom_scenario"):
@@ -296,10 +343,17 @@ def _render_custom_editor() -> None:
                 scenario = config_from_json(st.session_state.saved_custom_json)
                 st.session_state.custom_editor_maze = scenario.maze
                 st.session_state.maze = scenario.maze
+                st.session_state.editor_history = []
+                st.session_state.editor_redo = []
+                st.session_state.scenario_modified = True
                 _clear_execution_state()
     with actions[2]:
         if st.button("Limpar alterações", key="clear_custom_edits"):
             st.session_state.custom_editor_maze = st.session_state.custom_base_maze or maze
+            st.session_state.maze = st.session_state.custom_base_maze or maze
+            st.session_state.editor_history = []
+            st.session_state.editor_redo = []
+            st.session_state.scenario_modified = False
             _clear_execution_state()
     with actions[3]:
         st.download_button(
@@ -317,6 +371,9 @@ def _render_custom_editor() -> None:
             scenario = config_from_json(uploaded.getvalue().decode("utf-8"))
             st.session_state.custom_editor_maze = scenario.maze
             st.session_state.maze = scenario.maze
+            st.session_state.editor_history = []
+            st.session_state.editor_redo = []
+            st.session_state.scenario_modified = True
             st.success("Configuração importada. Execute os algoritmos quando desejar.")
         except (UnicodeDecodeError, ValueError) as error:
             st.error(f"Não foi possível importar o cenário: {error}")
