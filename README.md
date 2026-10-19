@@ -5,7 +5,8 @@ Projeto acadêmico da AV3 de Sistemas de Controle e Inteligência Artificial (Un
 ## Requisitos e execução
 
 - Python 3.11 ou superior;
-- Streamlit, Pandas e Matplotlib para a aplicação e os gráficos;
+- Streamlit, Pandas, Matplotlib e Plotly para a aplicação e os gráficos;
+- Kaleido para exportar gráficos interativos em PNG;
 - `pytest` para os testes automatizados.
 
 ```bash
@@ -45,17 +46,33 @@ Não existe limite máximo artificial de energia. A chegada ao objetivo com ener
 - Os dois algoritmos expandem somente os vizinhos do estado que está sendo processado; não há caminho pré-calculado.
 - `SearchResult` registra algoritmo, sucesso, movimentos, estados completos expandidos, energia final, caminho, recargas, tempo em milissegundos e sequência de estados para animação futura. Métricas dependentes da chegada ficam nulas quando não há solução.
 
+## Modalidades de geração
+
+O gerador oferece cinco modalidades:
+
+- **Fácil:** 10–14 obstáculos;
+- **Médio:** 15–19 obstáculos;
+- **Difícil:** 20–25 obstáculos;
+- **Aleatório:** quantidade sorteada entre 10 e 25;
+- **Personalizado:** quantidade configurável, editor visual, validação, salvamento, importação e exportação JSON.
+
+Uma semente informada reconstrói exatamente o mesmo cenário. Sem semente, o modo aleatório usa uma nova semente. A quantidade de obstáculos é um indicador de configuração, não uma garantia de dificuldade real: a distribuição dos obstáculos, as recargas e a conectividade determinam a dificuldade observada.
+
+O formato JSON usa coordenadas acadêmicas de 1 a 10 e armazena semente, modalidade, obstáculos e recargas. A configuração só pode ser executada após validar 10×10, entrada `(1,1)`, saída `(10,10)`, 10–25 obstáculos, cinco recargas `+5` e três `+10`.
+
 ## Interface e experimentos
 
-O dashboard possui três abas:
+O dashboard possui cinco abas:
 
-- **Simulador:** controles de semente, obstáculos, algoritmo e velocidade; visualização do labirinto; métricas; animação da expansão virtual e do percurso físico.
-- **Comparação BFS × A*:** executa os dois algoritmos no mesmo mapa e reinicializa energia e recargas de cada execução.
-- **Experimentos:** executa lotes reproduzíveis de 10, 30 ou 50 labirintos, mostra progresso, tabelas, médias, taxa de sucesso e cinco gráficos comparativos.
+- **Visão Geral:** metadados do cenário, indicadores geométricos, cards BFS/A*, tabela comparativa e interpretação didática.
+- **Comparação de Caminhos:** dois mapas lado a lado, expansão virtual separada do percurso físico e controles de início, pausa, reinício e passos.
+- **Desempenho dos Algoritmos:** gráficos Plotly de estados, tempo, movimentos e energia, com exportação PNG.
+- **Análise de Energia:** evolução real da energia, recargas coletadas, tabela por movimento e exportação CSV.
+- **Laboratório de Experimentos:** lotes de 10, 30, 50 ou quantidade personalizada entre 1 e 100, por modalidade, com sementes, progresso, estatísticas condicionadas à solução e classificação de cada cenário.
 
 A expansão virtual é apresentada em azul e o caminho físico em roxo. A expansão não consome energia; somente a sequência de estados do caminho físico representa movimentos do robô.
 
-Os resultados podem ser baixados em CSV e os gráficos em PNG. O botão de persistência grava os dados reais em `results/experimentos.csv` e `results/comparacao.png`; esses artefatos gerados são ignorados pelo Git.
+Os resultados podem ser baixados em CSV, JSON e PNG. O botão de persistência grava dados reais em `results/`; a semente e a modalidade são preservadas para reprodução. Métricas de movimentos, energia e recargas médias exibem o tamanho da amostra solucionada e não substituem cenários sem solução por zeros.
 
 ## Entrega acadêmica e reprodução
 
@@ -84,6 +101,7 @@ As buscas clássicas exploram virtualmente nós do espaço de estados: o mapa es
 app.py                 Ponto de entrada Streamlit e API programática
 src/models.py          Estado e resultado padronizado
 src/maze.py            Geração, validação e vizinhança
+src/scenarios.py       Modalidades, editor e JSON de cenários
 src/energy.py          Transição única de energia
 src/search.py          Heurística e reconstrução compartilhada
 src/bfs.py             Busca em Largura
@@ -91,6 +109,7 @@ src/astar.py           Busca A*
 src/metrics.py         Medição de tempo
 src/experiments.py     Lotes reproduzíveis e registros tabulares
 src/analysis.py        Médias, filtros e gráficos comparativos
+src/dashboard_analysis.py Indicadores, Plotly e interpretações didáticas
 src/visualization.py   Renderer do labirinto
 src/animation.py       Amostragem segura de frames
 src/export.py          Exportação CSV e PNG
