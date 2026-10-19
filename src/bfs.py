@@ -1,0 +1,53 @@
+"""Busca em Largura para navegação no labirinto."""
+
+from __future__ import annotations
+
+from collections import deque
+
+from .energy import INITIAL_ENERGY, initial_state, transition
+from .maze import Maze
+from .models import SearchResult, State
+from .search import build_result, start_timer
+
+
+def breadth_first_search(
+    maze: Maze, *, initial_energy: int = INITIAL_ENERGY
+) -> SearchResult:
+    """Encontra o percurso viável com menor quantidade de movimentos.
+
+    Cada item da fila é um estado completo. Assim, a posição sozinha nunca é
+    usada como chave de visitados: energia e máscara de recargas fazem parte do
+    espaço de estados explorado.
+    """
+    started_at = start_timer()
+    initial = initial_state(maze, initial_energy)
+    frontier: deque[State] = deque([initial])
+    visited = {initial}
+    parents: dict[State, State | None] = {initial: None}
+    explored_states = 0
+    final_state: State | None = None
+
+    while frontier:
+        current = frontier.popleft()
+        explored_states += 1
+
+        if current.position == maze.goal:
+            final_state = current
+            break
+
+        for destination in maze.neighbors(current.position):
+            successor = transition(maze, current, destination)
+            if successor is None or successor in visited:
+                continue
+            visited.add(successor)
+            parents[successor] = current
+            frontier.append(successor)
+
+    return build_result(
+        algorithm="BFS",
+        maze=maze,
+        final_state=final_state,
+        parents=parents,
+        explored_states=explored_states,
+        started_at=started_at,
+    )
