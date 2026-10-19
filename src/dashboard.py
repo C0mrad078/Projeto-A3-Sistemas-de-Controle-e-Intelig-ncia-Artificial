@@ -33,6 +33,7 @@ from .export import (
 )
 from .maze import MAX_OBSTACLES, MIN_OBSTACLES, Maze
 from .models import SearchResult
+from .replay import EXPLORATION_PHASE, PHYSICAL_PHASE, Replay, build_replay, next_index, previous_index
 from .scenarios import (
     CELL_KINDS,
     EDITOR_TOOLS,
@@ -52,9 +53,10 @@ from .visualization import render_maze
 ALGORITHM_NAMES = ("BFS", "A*")
 ANIMATION_SPEEDS = {
     "Desligada": 0.0,
-    "Rápida": 0.02,
-    "Normal": 0.08,
-    "Lenta": 0.20,
+    "0,5x": 0.20,
+    "1x": 0.10,
+    "2x": 0.05,
+    "4x": 0.02,
 }
 
 
@@ -68,7 +70,7 @@ def _initialize_session_state() -> None:
         "use_seed": True,
         "obstacle_count": 15,
         "selected_algorithm": "BFS",
-        "animation_speed": "Normal",
+        "animation_speed": "1x",
         "generation_mode": "Aleatório",
         "results": {},
         "comparison_results": None,
@@ -85,6 +87,7 @@ def _initialize_session_state() -> None:
         "animation_phase": "exploração",
         "animation_index": 0,
         "animation_playing": False,
+        "replays": {},
         "show_explored": True,
         "only_final_path": False,
         "experiment_mode": "Aleatório",
@@ -97,6 +100,8 @@ def _initialize_session_state() -> None:
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
+    if st.session_state.animation_speed not in ANIMATION_SPEEDS:
+        st.session_state.animation_speed = "1x"
 
 
 def _clear_execution_state() -> None:
@@ -106,6 +111,7 @@ def _clear_execution_state() -> None:
     st.session_state.animation_phase = "exploração"
     st.session_state.animation_index = 0
     st.session_state.animation_playing = False
+    st.session_state.replays = {}
 
 
 def _run_single_algorithm(algorithm: str) -> SearchResult | None:
@@ -114,6 +120,7 @@ def _run_single_algorithm(algorithm: str) -> SearchResult | None:
     maze = st.session_state.maze
     result = breadth_first_search(maze) if algorithm == "BFS" else a_star_search(maze)
     st.session_state.results[algorithm] = result
+    st.session_state.replays[algorithm] = build_replay(maze, result)
     st.session_state.active_result = result
     st.session_state.comparison_results = None
     st.session_state.animation_phase = "exploração"
@@ -131,6 +138,10 @@ def _run_comparison() -> None:
     }
     st.session_state.comparison_results = comparison
     st.session_state.results = dict(comparison)
+    st.session_state.replays = {
+        algorithm: build_replay(maze, result)
+        for algorithm, result in comparison.items()
+    }
     st.session_state.active_result = comparison[st.session_state.selected_algorithm]
     st.session_state.animation_phase = "exploração"
     st.session_state.animation_index = 0
@@ -439,20 +450,47 @@ def _render_overview() -> None:
         st.info("Gere um cenário e execute BFS, A* ou a comparação pela barra lateral.")
 
 
-def _animation_view(result: SearchResult) -> dict[str, Any]:
-    phase = st.session_state.animation_phase
-    index = st.session_state.animation_index
-    if phase == "exploração":
-        explored = tuple(state.position for state in result.explored_sequence[: index + 1])
-        return {"explored": explored, "path": (), "robot": None, "title": "Expansão virtual"}
+def _animation_view(result: SearchResult, replay: Replay) -> dict[str, Any]:
+    event = replay.event(st.session_state.animation_index)
+    if event.phase == EXPLORATION_PHASE:
+        explored = tuple(
+            state.position for state in result.explored_sequence[: event.explored_count]
+        )
+        state_label = f"g={event.g} · h={event.h} · f={event.f}"
+        return {
+            "explored": explored,
+            "path": (),
+            "robot": None,
+            "energy": event.energy,
+            "recharge": None,
+            "title": "Expansão virtual",
+            "state_label": state_label,
+            "event": event,
+        }
     if not result.found:
-        return {"explored": (), "path": (), "robot": None, "title": "Busca sem solução"}
-    visible = result.state_sequence[: min(index + 1, len(result.state_sequence))]
+        return {
+            "explored": (),
+            "path": (),
+            "robot": None,
+            "energy": event.energy,
+            "recharge": None,
+            "title": "Busca sem solução",
+            "state_label": "sem percurso físico",
+            "event": event,
+        }
+    visible = result.state_sequence[: event.physical_move + 1]  # type: ignore[operator]
     return {
         "explored": tuple(state.position for state in result.explored_sequence),
         "path": tuple(state.position for state in visible),
-        "robot": visible[-1].position,
+        "robot": event.position,
+        "energy": event.energy,
+        "recharge": event.recharge_position,
         "title": "Percurso físico do robô",
+        "state_label": (
+            f"movimento {event.physical_move}"
+            + (f" · +{event.recharge_value}" if event.recharge_value else "")
+        ),
+        "event": event,
     }
 
 
@@ -460,23 +498,18 @@ def _advance_animation(direction: int = 1) -> None:
     results = st.session_state.comparison_results or st.session_state.results
     if not results:
         return
+    replays = st.session_state.replays
+    if not replays:
+        replays = {
+            algorithm: build_replay(st.session_state.maze, result)
+            for algorithm, result in results.items()
+        }
+        st.session_state.replays = replays
+    last_index = max((replay.last_index for replay in replays.values()), default=0)
     if direction < 0:
-        if st.session_state.animation_phase == "físico" and st.session_state.animation_index > 0:
-            st.session_state.animation_index -= 1
-        else:
-            st.session_state.animation_phase = "exploração"
-            st.session_state.animation_index = max(0, st.session_state.animation_index - 1)
-        return
-    max_exploration = max((len(result.explored_sequence) - 1 for result in results.values()), default=0)
-    if st.session_state.animation_phase == "exploração":
-        if st.session_state.animation_index < max_exploration:
-            st.session_state.animation_index += 1
-        else:
-            st.session_state.animation_phase = "físico"
-            st.session_state.animation_index = 0
+        st.session_state.animation_index = max(0, min(st.session_state.animation_index - 1, last_index))
     else:
-        max_physical = max((len(result.state_sequence) - 1 for result in results.values() if result.found), default=0)
-        st.session_state.animation_index = min(st.session_state.animation_index + 1, max_physical)
+        st.session_state.animation_index = min(st.session_state.animation_index + 1, last_index)
 
 
 def _render_comparison_paths() -> None:
@@ -484,24 +517,26 @@ def _render_comparison_paths() -> None:
     if comparison is None:
         st.info("Use 'Comparar algoritmos' para executar BFS e A* no mesmo cenário.")
         return
-    controls = st.columns(6)
+    controls = st.columns(7)
     if controls[0].button("▶ Iniciar animação", key="animation_start"):
         st.session_state.animation_phase = "exploração"
         st.session_state.animation_index = 0
         st.session_state.animation_playing = True
     if controls[1].button("⏸ Pausar", key="animation_pause"):
         st.session_state.animation_playing = False
-    if controls[2].button("↻ Reiniciar", key="animation_reset"):
+    if controls[2].button("⏵ Continuar", key="animation_continue"):
+        st.session_state.animation_playing = True
+    if controls[3].button("↻ Reiniciar", key="animation_reset"):
         st.session_state.animation_phase = "exploração"
         st.session_state.animation_index = 0
         st.session_state.animation_playing = False
-    if controls[3].button("⏭ Próximo passo", key="animation_next"):
+    if controls[4].button("⏭ Próximo passo", key="animation_next"):
         _advance_animation(1)
         st.session_state.animation_playing = False
-    if controls[4].button("⏮ Passo anterior", key="animation_previous"):
+    if controls[5].button("⏮ Passo anterior", key="animation_previous"):
         _advance_animation(-1)
         st.session_state.animation_playing = False
-    controls[5].checkbox("Mostrar exploração", key="show_explored")
+    controls[6].checkbox("Mostrar exploração", key="show_explored")
     st.checkbox("Mostrar apenas o caminho final", key="only_final_path")
     st.caption(
         "Expansão virtual consulta estados sem representar deslocamento físico. "
@@ -510,7 +545,10 @@ def _render_comparison_paths() -> None:
     columns = st.columns(2)
     for column, algorithm in zip(columns, ALGORITHM_NAMES):
         result = comparison[algorithm]
-        view = _animation_view(result)
+        replay = st.session_state.replays.get(algorithm) or build_replay(
+            st.session_state.maze, result
+        )
+        view = _animation_view(result, replay)
         with column:
             st.markdown(f"### {'🔵' if algorithm == 'BFS' else '🟣'} {algorithm}")
             figure = render_maze(
@@ -523,17 +561,23 @@ def _render_comparison_paths() -> None:
                 title=view["title"],
                 theme=st.session_state.selected_theme,
                 character=st.session_state.selected_character,
-                energy=(
-                    result.remaining_energy
-                    if result.found and view["robot"] == result.path[-1]
-                    else None
-                ),
+                energy=view["energy"],
+                recharge_effect_position=view["recharge"],
+                state_label=view["state_label"],
             )
             st.pyplot(figure, use_container_width=True)
             plt.close(figure)
             st.metric("Estados explorados", result.explored_states)
             st.metric("Movimentos", _metric_value(result.moves))
             st.metric("Energia", _metric_value(result.remaining_energy))
+            event = view["event"]
+            if event.phase == EXPLORATION_PHASE:
+                st.caption(
+                    f"Estado expandido: ({event.position[0] + 1},{event.position[1] + 1}) · "
+                    f"g={event.g} · h={event.h} · f={event.f}"
+                )
+            elif event.recharge_value:
+                st.success(f"Coleta visual: +{event.recharge_value} em ({event.position[0] + 1},{event.position[1] + 1})")
     if st.session_state.animation_playing and ANIMATION_SPEEDS[st.session_state.animation_speed] > 0:
         _advance_animation(1)
         time.sleep(ANIMATION_SPEEDS[st.session_state.animation_speed])
