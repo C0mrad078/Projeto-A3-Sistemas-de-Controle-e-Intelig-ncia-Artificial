@@ -124,11 +124,38 @@ def custom_scenario(
 
 def custom_validation(maze: Maze) -> tuple[bool, tuple[str, ...]]:
     """Valida o mapa editável sem lançar exceção na interface."""
+    errors: list[str] = []
+    if (maze.rows, maze.cols) != (10, 10):
+        errors.append("A matriz precisa ser 10x10.")
+    if maze.start != START:
+        errors.append("A entrada precisa permanecer em (1,1).")
+    if maze.goal != GOAL:
+        errors.append("A saída precisa permanecer em (10,10).")
+    if len(maze.obstacles) < MIN_OBSTACLES:
+        errors.append(f"Você adicionou {len(maze.obstacles)} obstáculos. O mínimo permitido é 10.")
+    elif len(maze.obstacles) > MAX_OBSTACLES:
+        errors.append("O máximo permitido é 25 obstáculos.")
+    recharge_5 = sum(value == 5 for value in maze.recharges.values())
+    recharge_10 = sum(value == 10 for value in maze.recharges.values())
+    if recharge_5 != 5:
+        difference = 5 - recharge_5
+        errors.append(
+            f"É necessário posicionar mais {difference} pontos de energia +5."
+            if difference > 0
+            else "Há pontos de energia +5 em excesso; o total deve ser 5."
+        )
+    if recharge_10 != 3:
+        difference = 3 - recharge_10
+        errors.append(
+            f"É necessário posicionar mais {difference} pontos de energia +10."
+            if difference > 0
+            else "Há pontos de energia +10 em excesso; o total deve ser 3."
+        )
     try:
-        maze.validate_generated_scenario()
+        maze._validate_structure()
     except ValueError as error:
-        return False, (str(error),)
-    return True, ()
+        errors.append(str(error))
+    return not errors, tuple(errors)
 
 
 def apply_cell_edit(maze: Maze, position: Position, kind: str) -> Maze:
