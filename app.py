@@ -52,9 +52,9 @@ def main() -> None:
 
 def dashboard_main() -> None:
     """Inicia o dashboard quando o arquivo é executado pelo Streamlit."""
-    from src.dashboard import render_dashboard
+    from src.basic_dashboard import render_basic_dashboard
 
-    render_dashboard()
+    render_basic_dashboard()
 
 
 if __name__ == "__main__":
