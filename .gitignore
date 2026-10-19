@@ -13,3 +13,4 @@ env/
 # Resultados gerados localmente; mantenha apenas a estrutura versionada.
 results/*.json
 results/*.csv
+results/*.png
