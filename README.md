@@ -57,6 +57,23 @@ A expansão virtual é apresentada em azul e o caminho físico em roxo. A expans
 
 Os resultados podem ser baixados em CSV e os gráficos em PNG. O botão de persistência grava os dados reais em `results/experimentos.csv` e `results/comparacao.png`; esses artefatos gerados são ignorados pelo Git.
 
+## Entrega acadêmica e reprodução
+
+O relatório final está em [`docs/relatorio_robot_maze_ai.pdf`](/Users/jhonatan/Projeto-A3-Sistemas-de-Controle-e-Intelig-ncia-Artificial/docs/relatorio_robot_maze_ai.pdf), com campos editáveis para integrantes. O roteiro de exposição está em [`docs/apresentacao.md`](/Users/jhonatan/Projeto-A3-Sistemas-de-Controle-e-Intelig-ncia-Artificial/docs/apresentacao.md) e a matriz de requisitos em [`docs/traceability.md`](/Users/jhonatan/Projeto-A3-Sistemas-de-Controle-e-Intelig-ncia-Artificial/docs/traceability.md).
+
+Os resultados finais versionados ficam em [`results/experimentos_finais.csv`](/Users/jhonatan/Projeto-A3-Sistemas-de-Controle-e-Intelig-ncia-Artificial/results/experimentos_finais.csv), [`results/resumo_finais.csv`](/Users/jhonatan/Projeto-A3-Sistemas-de-Controle-e-Intelig-ncia-Artificial/results/resumo_finais.csv) e nos três PNGs de comparação. Para reproduzi-los:
+
+```bash
+.venv/bin/python scripts/generate_final_artifacts.py
+.venv/bin/python scripts/generate_report.py
+```
+
+As sementes finais são 10000–10009, 20000–20029 e 30000–30049. O tempo de execução pode variar por máquina; cenário, solução, movimentos e estados permanecem reproduzíveis.
+
+## Limitações conhecidas
+
+O modelo simula conhecimento local consultando os quatro vizinhos em um mapa disponível ao simulador; não implementa sensores nem descoberta online de um robô físico. A heurística Manhattan não modela obstáculos, energia ou recargas. Os tempos são dependentes do ambiente e devem ser interpretados junto com estados explorados e taxas de sucesso.
+
 ## Exploração simbólica e robô físico
 
 As buscas clássicas exploram virtualmente nós do espaço de estados: o mapa está disponível para a função de sucessores, mas cada expansão consulta apenas os quatro vizinhos do estado atual. Isso não representa um robô físico que já conhece todo o mapa. Um robô físico precisaria descobrir, durante o deslocamento, quais células existem e quais estão livres, mantendo um mapa parcial e tomando decisões online. Essa distinção será preservada em futuras interfaces e experimentos.
@@ -78,6 +95,7 @@ src/visualization.py   Renderer do labirinto
 src/animation.py       Amostragem segura de frames
 src/export.py          Exportação CSV e PNG
 src/dashboard.py       Interface Streamlit
+scripts/               Geradores de resultados e relatório PDF
 tests/                 Testes de domínio e algoritmos
 docs/                  Documentação acadêmica
 results/               Espaço para resultados futuros
