@@ -76,3 +76,11 @@ def test_custom_experiment_batch_repeats_the_selected_map_without_contamination(
         pair = [record for record in records if record.scenario_id == scenario_id]
         assert len(pair) == 2
         assert {record.algorithm for record in pair} == {"BFS", "A*"}
+
+
+def test_custom_batch_size_is_bounded_and_supported_explicitly() -> None:
+    records = run_experiments(2, seed_start=1900, custom_batch=True)
+
+    assert len(records) == 4
+    with pytest.raises(ValueError):
+        run_experiments(101, custom_batch=True)
