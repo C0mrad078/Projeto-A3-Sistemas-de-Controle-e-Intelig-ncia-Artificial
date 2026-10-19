@@ -98,7 +98,9 @@ def _clear_execution_state() -> None:
     st.session_state.animation_playing = False
 
 
-def _run_single_algorithm(algorithm: str) -> SearchResult:
+def _run_single_algorithm(algorithm: str) -> SearchResult | None:
+    if not _custom_map_is_ready():
+        return None
     maze = st.session_state.maze
     result = breadth_first_search(maze) if algorithm == "BFS" else a_star_search(maze)
     st.session_state.results[algorithm] = result
@@ -110,6 +112,8 @@ def _run_single_algorithm(algorithm: str) -> SearchResult:
 
 
 def _run_comparison() -> None:
+    if not _custom_map_is_ready():
+        return
     maze = st.session_state.maze
     comparison = {
         "BFS": breadth_first_search(maze),
@@ -133,6 +137,18 @@ def _metric_value(value: Any, suffix: str = "") -> str:
 
 def _parse_seed() -> int | None:
     return int(st.session_state.maze_seed) if st.session_state.use_seed else None
+
+
+def _custom_map_is_ready() -> bool:
+    if st.session_state.maze.mode != "Personalizado":
+        return True
+    valid, errors = custom_validation(st.session_state.maze)
+    if not valid:
+        st.warning(
+            "O cenário personalizado ainda não está pronto para execução: "
+            + " ".join(errors)
+        )
+    return valid
 
 
 def _generate_from_controls() -> None:
