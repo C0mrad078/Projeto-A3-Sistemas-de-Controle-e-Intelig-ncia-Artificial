@@ -33,6 +33,9 @@ class Maze:
     goal: Position
     obstacles: frozenset[Position] = field(default_factory=frozenset)
     recharges: Mapping[Position, int] = field(default_factory=dict)
+    seed: int | None = None
+    mode: str = "Aleatório"
+    scenario_id: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "obstacles", frozenset(self.obstacles))
@@ -103,6 +106,16 @@ class Maze:
         """Recargas em ordem estável para indexação da máscara de bits."""
         return tuple(sorted(self.recharges))
 
+    @property
+    def free_positions(self) -> frozenset[Position]:
+        """Células disponíveis para deslocamento, incluindo recargas."""
+        return frozenset(
+            (row, col)
+            for row in range(self.rows)
+            for col in range(self.cols)
+            if (row, col) not in self.obstacles
+        )
+
     def recharge_index(self, position: Position) -> int:
         """Retorna o índice estável de uma recarga para a máscara de bits."""
         try:
@@ -111,7 +124,14 @@ class Maze:
             raise ValueError(f"A posição {position} não é uma recarga.") from error
 
     @classmethod
-    def generate(cls, seed: int, obstacle_count: int | None = None) -> "Maze":
+    def generate(
+        cls,
+        seed: int,
+        obstacle_count: int | None = None,
+        *,
+        mode: str = "Aleatório",
+        scenario_id: str = "",
+    ) -> "Maze":
         """Gera um cenário reproduzível pelas mesmas semente e configuração."""
         rng = Random(seed)
         if obstacle_count is None:
@@ -140,6 +160,9 @@ class Maze:
             goal=GOAL,
             obstacles=obstacles,
             recharges=recharges,
+            seed=seed,
+            mode=mode,
+            scenario_id=scenario_id,
         )
         maze.validate_generated_scenario()
         return maze
