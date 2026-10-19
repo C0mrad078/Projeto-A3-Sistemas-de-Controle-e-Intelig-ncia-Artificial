@@ -165,8 +165,16 @@ def performance_figures(results: Mapping[str, SearchResult]) -> dict[str, go.Fig
     return {
         "estados": bar("Estados completos expandidos", "Estados", [r.explored_states for r in available]),
         "tempo": bar("Tempo de processamento", "Milissegundos", [round(r.execution_time_ms, 3) for r in available]),
-        "movimentos": bar("Tamanho do caminho", "Movimentos", [r.moves for r in available if r.found]),
-        "energia": bar("Energia final", "Energia", [r.remaining_energy for r in available if r.found]),
+        "movimentos": bar(
+            "Tamanho do caminho",
+            "Movimentos",
+            [r.moves if r.found else None for r in available],
+        ),
+        "energia": bar(
+            "Energia final",
+            "Energia",
+            [r.remaining_energy if r.found else None for r in available],
+        ),
     }
 
 
@@ -247,3 +255,106 @@ def interpret_results(results: Mapping[str, SearchResult]) -> tuple[str, ...]:
         messages.append("Houve divergência de sucesso no mesmo espaço de estados; isso deve ser investigado como possível problema de implementação ou interrupção por recursos.")
     messages.append("A expansão visual é virtual; somente o caminho reconstruído consome energia e representa deslocamento físico.")
     return tuple(messages)
+
+
+def experiment_summary(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Resume um lote por modalidade e algoritmo, com amostras explícitas."""
+    if dataframe.empty:
+        return pd.DataFrame()
+    rows: list[dict[str, Any]] = []
+    for (mode, algorithm), group in dataframe.groupby(["modalidade", "algorithm"], sort=False):
+        solved = group[group["encontrou_solucao"]]
+        rows.append(
+            {
+                "modalidade": mode,
+                "algoritmo": algorithm,
+                "cenarios": int(group["scenario_id"].nunique()),
+                "sucessos": int(group["encontrou_solucao"].sum()),
+                "taxa_sucesso_pct": round(float(group["encontrou_solucao"].mean() * 100), 2),
+                "media_estados_explorados": round(float(group["estados_explorados"].mean()), 3),
+                "media_tempo_ms": round(float(group["tempo_execucao_ms"].mean()), 3),
+                "media_movimentos_sucesso": round(float(solved["movimentos"].mean()), 3) if not solved.empty else None,
+                "media_energia_final_sucesso": round(float(solved["energia_restante"].mean()), 3) if not solved.empty else None,
+                "media_recargas_sucesso": round(float(solved["recargas_utilizadas"].mean()), 3) if not solved.empty else None,
+                "amostra_solucoes": int(len(solved)),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def scenario_outcomes(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Classifica o sucesso conjunto de cada cenário do lote."""
+    if dataframe.empty:
+        return pd.DataFrame()
+    pivot = dataframe.pivot_table(
+        index=["scenario_id", "seed", "modalidade"],
+        columns="algorithm",
+        values="encontrou_solucao",
+        aggfunc="first",
+        fill_value=False,
+    ).reset_index()
+    pivot["BFS"] = pivot.get("BFS", False)
+    pivot["A*"] = pivot.get("A*", False)
+
+    def classify(row: pd.Series) -> str:
+        if row["BFS"] and row["A*"]:
+            return "Ambos encontraram solução"
+        if row["BFS"]:
+            return "Somente BFS"
+        if row["A*"]:
+            return "Somente A*"
+        return "Nenhum encontrou solução"
+
+    pivot["resultado_cenario"] = pivot.apply(classify, axis=1)
+    return pivot
+
+
+def experiment_figures(dataframe: pd.DataFrame) -> dict[str, go.Figure]:
+    """Cria os gráficos interativos do laboratório a partir do DataFrame real."""
+    summary = experiment_summary(dataframe)
+    figures: dict[str, go.Figure] = {}
+    if summary.empty:
+        return figures
+
+    def grouped_bar(column: str, title: str, y_title: str, *, solved_only: bool = False) -> go.Figure:
+        source = summary.copy()
+        if solved_only:
+            source = source[source["amostra_solucoes"] > 0]
+        figure = go.Figure()
+        for algorithm in ALGORITHMS:
+            rows = source[source["algoritmo"] == algorithm]
+            figure.add_trace(
+                go.Bar(
+                    x=rows["modalidade"],
+                    y=rows[column],
+                    name=algorithm,
+                    marker_color=ALGORITHM_COLORS[algorithm],
+                    customdata=rows[["amostra_solucoes"]],
+                    hovertemplate="%{x}<br>%{y}<br>Amostra solucionada: %{customdata[0]}<extra></extra>",
+                )
+            )
+        figure.update_layout(title=title, yaxis_title=y_title, barmode="group")
+        return figure
+
+    figures["sucesso"] = grouped_bar("taxa_sucesso_pct", "Taxa de sucesso por modalidade", "%")
+    figures["estados"] = grouped_bar("media_estados_explorados", "Média de estados explorados", "Estados")
+    figures["tempo"] = grouped_bar("media_tempo_ms", "Tempo médio de execução", "Milissegundos")
+    figures["movimentos"] = grouped_bar(
+        "media_movimentos_sucesso",
+        "Comprimento médio — somente soluções",
+        "Movimentos",
+        solved_only=True,
+    )
+    figures["energia"] = grouped_bar(
+        "media_energia_final_sucesso",
+        "Energia média final — somente soluções",
+        "Energia",
+        solved_only=True,
+    )
+    figures["recargas"] = grouped_bar(
+        "media_recargas_sucesso",
+        "Recargas médias utilizadas — somente soluções",
+        "Recargas",
+        solved_only=True,
+    )
+    return figures
