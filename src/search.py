@@ -46,6 +46,7 @@ def build_result(
     explored_states: int,
     explored_sequence: tuple[State, ...],
     started_at: float,
+    explored_costs: tuple[int, ...] = (),
 ) -> SearchResult:
     """Cria um resultado uniforme para sucesso ou ausência de solução."""
     execution_time_ms = elapsed_milliseconds(started_at)
@@ -61,6 +62,7 @@ def build_result(
             execution_time_ms=execution_time_ms,
             state_sequence=(),
             explored_sequence=explored_sequence,
+            explored_costs=explored_costs,
         )
 
     states = reconstruct_states(parents, final_state)
@@ -76,6 +78,7 @@ def build_result(
         execution_time_ms=execution_time_ms,
         state_sequence=states,
         explored_sequence=explored_sequence,
+        explored_costs=explored_costs,
     )
 
 

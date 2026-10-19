@@ -24,14 +24,17 @@ def breadth_first_search(
     frontier: deque[State] = deque([initial])
     visited = {initial}
     parents: dict[State, State | None] = {initial: None}
+    depths: dict[State, int] = {initial: 0}
     explored_states = 0
     explored_sequence: list[State] = []
+    explored_costs: list[int] = []
     final_state: State | None = None
 
     while frontier:
         current = frontier.popleft()
         explored_states += 1
         explored_sequence.append(current)
+        explored_costs.append(depths[current])
 
         if current.position == maze.goal:
             final_state = current
@@ -43,6 +46,7 @@ def breadth_first_search(
                 continue
             visited.add(successor)
             parents[successor] = current
+            depths[successor] = depths[current] + 1
             frontier.append(successor)
 
     return build_result(
@@ -52,5 +56,6 @@ def breadth_first_search(
         parents=parents,
         explored_states=explored_states,
         explored_sequence=tuple(explored_sequence),
+        explored_costs=tuple(explored_costs),
         started_at=started_at,
     )

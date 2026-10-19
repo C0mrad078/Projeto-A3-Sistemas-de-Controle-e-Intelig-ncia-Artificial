@@ -49,12 +49,17 @@ class SearchResult:
     execution_time_ms: float
     state_sequence: tuple[State, ...]
     explored_sequence: tuple[State, ...] = ()
+    explored_costs: tuple[int, ...] = ()
 
     def __post_init__(self) -> None:
         if self.explored_states < 0:
             raise ValueError("A quantidade de estados explorados não pode ser negativa.")
         if self.execution_time_ms < 0:
             raise ValueError("O tempo de execução não pode ser negativo.")
+        if self.explored_costs and len(self.explored_costs) != len(self.explored_sequence):
+            raise ValueError("Cada estado explorado precisa ter seu custo g(n) registrado.")
+        if any(cost < 0 for cost in self.explored_costs):
+            raise ValueError("Os custos de exploração não podem ser negativos.")
         if self.found:
             if self.moves is None or self.remaining_energy is None:
                 raise ValueError("Resultados com solução precisam de movimentos e energia.")
