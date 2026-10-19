@@ -5,6 +5,7 @@ import pytest
 from src.maze import GOAL, START, Maze
 from src.scenarios import (
     apply_cell_edit,
+    apply_tool_edit,
     config_from_json,
     config_to_json,
     custom_scenario,
@@ -67,3 +68,19 @@ def test_custom_json_rejects_wrong_recharge_counts() -> None:
 
     with pytest.raises(ValueError):
         config_from_json(payload)
+
+
+def test_editor_tools_preserve_recharges_when_removing_only_an_obstacle() -> None:
+    maze = Maze(
+        rows=10,
+        cols=10,
+        start=START,
+        goal=GOAL,
+        obstacles={(1, 1)},
+        recharges={(1, 2): 5},
+    )
+
+    edited = apply_tool_edit(maze, (1, 1), "Remover obstáculo")
+
+    assert (1, 1) not in edited.obstacles
+    assert edited.recharges[(1, 2)] == 5
