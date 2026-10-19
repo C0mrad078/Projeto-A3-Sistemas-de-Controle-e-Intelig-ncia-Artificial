@@ -60,6 +60,14 @@ Uma semente informada reconstrói exatamente o mesmo cenário. Sem semente, o mo
 
 O formato JSON usa coordenadas acadêmicas de 1 a 10 e armazena semente, modalidade, obstáculos e recargas. A configuração só pode ser executada após validar 10×10, entrada `(1,1)`, saída `(10,10)`, 10–25 obstáculos, cinco recargas `+5` e três `+10`.
 
+## Personagens, temas e simulação
+
+A barra lateral permite escolher quatro personagens locais — Robô Clássico, Robô Futurista, Robô Pixel Art e Mascote — e quatro temas — Laboratório Futurista, Labirinto Clássico, Floresta e Dungeon Pixel Art. O renderer usa formas e símbolos locais, sem imagens externas em tempo de execução. Personagens e temas ocupam apenas a camada visual e não modificam estado, energia, obstáculos, recargas, BFS ou A*.
+
+Na aba **Comparação de Caminhos**, os snapshots registrados permitem iniciar, pausar, continuar, reiniciar, avançar e retroceder. A exploração virtual é apresentada separadamente do percurso físico. Durante a exploração A*, a interface mostra os valores reais de `g(n)`, `h(n)` e `f(n)`; durante o percurso físico, mostra energia, custo e recargas coletadas.
+
+No modo Personalizado, o editor possui ferramentas de seleção, adição/remoção de obstáculos, adição de recargas, remoção de elementos, desfazer/refazer, salvamento, importação e exportação. Toda edição invalida resultados anteriores e a execução fica bloqueada até a configuração cumprir as regras acadêmicas.
+
 ## Interface e experimentos
 
 O dashboard possui cinco abas:
