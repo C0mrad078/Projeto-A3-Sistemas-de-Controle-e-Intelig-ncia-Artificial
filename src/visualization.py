@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+import matplotlib
+
+matplotlib.use("Agg", force=True)
+
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D

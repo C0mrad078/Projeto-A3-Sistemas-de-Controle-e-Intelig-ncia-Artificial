@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+import matplotlib
+
+matplotlib.use("Agg", force=True)
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.figure import Figure
