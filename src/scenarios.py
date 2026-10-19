@@ -24,6 +24,14 @@ DIFFICULTY_RANGES: dict[str, tuple[int, int]] = {
     "Difícil": (20, 25),
 }
 CELL_KINDS = ("Livre", "Obstáculo", "Recarga +5", "Recarga +10")
+EDITOR_TOOLS = (
+    "Selecionar célula",
+    "Adicionar obstáculo",
+    "Remover obstáculo",
+    "Adicionar recarga +5",
+    "Adicionar recarga +10",
+    "Remover elemento",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,6 +159,37 @@ def apply_cell_edit(maze: Maze, position: Position, kind: str) -> Maze:
         goal=maze.goal,
         obstacles=obstacles,
         recharges=recharges,
+        seed=maze.seed,
+        mode="Personalizado",
+        scenario_id=maze.scenario_id,
+    )
+
+
+def apply_tool_edit(maze: Maze, position: Position, tool: str) -> Maze:
+    """Aplica uma ferramenta do editor sem confundir remoção de obstáculo com recarga."""
+    if tool not in EDITOR_TOOLS:
+        raise ValueError(f"Ferramenta de edição inválida: {tool!r}.")
+    if tool == "Selecionar célula":
+        return maze
+    if tool == "Adicionar obstáculo":
+        return apply_cell_edit(maze, position, "Obstáculo")
+    if tool == "Adicionar recarga +5":
+        return apply_cell_edit(maze, position, "Recarga +5")
+    if tool == "Adicionar recarga +10":
+        return apply_cell_edit(maze, position, "Recarga +10")
+    if tool == "Remover elemento":
+        return apply_cell_edit(maze, position, "Livre")
+    if position not in maze.obstacles:
+        return maze
+    obstacles = set(maze.obstacles)
+    obstacles.remove(position)
+    return Maze(
+        rows=maze.rows,
+        cols=maze.cols,
+        start=maze.start,
+        goal=maze.goal,
+        obstacles=obstacles,
+        recharges=maze.recharges,
         seed=maze.seed,
         mode="Personalizado",
         scenario_id=maze.scenario_id,
