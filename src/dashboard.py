@@ -44,6 +44,7 @@ from .scenarios import (
     generate_scenario,
     obstacle_range,
 )
+from .visual_config import character_options, get_character, get_theme, theme_options
 from .visualization import render_maze
 
 ALGORITHM_NAMES = ("BFS", "A*")
@@ -84,6 +85,8 @@ def _initialize_session_state() -> None:
         "experiment_custom_batch": 10,
         "experiment_seed_start": 10_000,
         "experiment_repeat_custom": True,
+        "selected_character": "Robô Clássico",
+        "selected_theme": "Labirinto Clássico",
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
@@ -186,6 +189,10 @@ def _render_sidebar() -> None:
         "Velocidade da animação", tuple(ANIMATION_SPEEDS), key="animation_speed"
     )
     st.sidebar.selectbox("Modalidade", GENERATION_MODES, key="generation_mode")
+    st.sidebar.selectbox("Personagem", character_options(), key="selected_character")
+    st.sidebar.selectbox("Tema visual", theme_options(), key="selected_theme")
+    st.sidebar.caption(get_character(st.session_state.selected_character).description)
+    st.sidebar.caption(get_theme(st.session_state.selected_theme).description)
     mode = st.session_state.generation_mode
     lower, upper = obstacle_range(mode)
     st.sidebar.caption(
@@ -322,11 +329,15 @@ def _render_maze(maze: Maze, result: SearchResult | None = None) -> None:
         else ()
     )
     path = result.path if result is not None and result.found else ()
+    robot_position = path[-1] if path else maze.start
     figure = render_maze(
         maze,
         explored_positions=explored,
         path=path,
-        robot_position=path[-1] if path else None,
+        robot_position=robot_position,
+        theme=st.session_state.selected_theme,
+        character=st.session_state.selected_character,
+        energy=result.remaining_energy if result is not None and result.found else 30,
         title="Labirinto e resultado selecionado" if result else "Labirinto aguardando execução",
     )
     st.pyplot(figure, use_container_width=True)
@@ -453,6 +464,13 @@ def _render_comparison_paths() -> None:
                 path=view["path"] if result.found else (),
                 robot_position=view["robot"],
                 title=view["title"],
+                theme=st.session_state.selected_theme,
+                character=st.session_state.selected_character,
+                energy=(
+                    result.remaining_energy
+                    if result.found and view["robot"] == result.path[-1]
+                    else None
+                ),
             )
             st.pyplot(figure, use_container_width=True)
             plt.close(figure)
