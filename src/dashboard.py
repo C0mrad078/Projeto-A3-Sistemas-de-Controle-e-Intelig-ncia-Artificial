@@ -86,6 +86,7 @@ def _initialize_session_state() -> None:
         "animation_index": 0,
         "animation_playing": False,
         "replays": {},
+        "replay_mode": "Sincronizada",
         "show_explored": True,
         "only_final_path": False,
         "experiment_mode": "Aleatório",
@@ -455,8 +456,12 @@ def _render_overview() -> None:
         st.info("Gere um cenário e execute BFS, A* ou a comparação pela barra lateral.")
 
 
-def _animation_view(result: SearchResult, replay: Replay) -> dict[str, Any]:
-    event = replay.event(st.session_state.animation_index)
+def _animation_view(
+    result: SearchResult, replay: Replay, index: int | None = None
+) -> dict[str, Any]:
+    event = replay.event(
+        st.session_state.animation_index if index is None else index
+    )
     if event.phase == EXPLORATION_PHASE:
         explored = tuple(
             state.position for state in result.explored_sequence[: event.explored_count]
@@ -510,7 +515,15 @@ def _advance_animation(direction: int = 1) -> None:
             for algorithm, result in results.items()
         }
         st.session_state.replays = replays
-    last_index = max((replay.last_index for replay in replays.values()), default=0)
+    mode = st.session_state.replay_mode
+    target_replays = (
+        replays
+        if mode == "Sincronizada"
+        else {mode: replays[mode]}
+        if mode in replays
+        else replays
+    )
+    last_index = max((replay.last_index for replay in target_replays.values()), default=0)
     if direction < 0:
         st.session_state.animation_index = max(0, min(st.session_state.animation_index - 1, last_index))
     else:
@@ -545,6 +558,26 @@ def _render_comparison_paths() -> None:
         st.session_state.animation_playing = False
     controls[6].checkbox("Mostrar exploração", key="show_explored")
     st.checkbox("Mostrar apenas o caminho final", key="only_final_path")
+    replay_mode = st.selectbox(
+        "Modo de reprodução",
+        ("Sincronizada", "BFS", "A*"),
+        key="replay_mode",
+        help="Sincronizada avança um índice de evento em ambos; o modo individual destaca um algoritmo.",
+    )
+    active_replays = (
+        st.session_state.replays
+        if replay_mode == "Sincronizada"
+        else {replay_mode: st.session_state.replays[replay_mode]}
+    )
+    max_event = max((replay.last_index for replay in active_replays.values()), default=0)
+    selected_event = st.selectbox(
+        "Selecionar estado/evento",
+        options=list(range(max_event + 1)),
+        index=min(st.session_state.animation_index, max_event),
+        format_func=lambda value: f"Evento {value + 1}",
+        key="selected_replay_event",
+    )
+    st.session_state.animation_index = selected_event
     st.caption(
         "Expansão virtual consulta estados sem representar deslocamento físico. "
         "A energia só muda nos estados do caminho físico."
@@ -555,7 +588,12 @@ def _render_comparison_paths() -> None:
         replay = st.session_state.replays.get(algorithm) or build_replay(
             st.session_state.maze, result
         )
-        view = _animation_view(result, replay)
+        visible_index = (
+            selected_event
+            if replay_mode == "Sincronizada" or algorithm == replay_mode
+            else 0
+        )
+        view = _animation_view(result, replay, visible_index)
         with column:
             st.markdown(f"### {'🔵' if algorithm == 'BFS' else '🟣'} {algorithm}")
             figure = render_maze(
