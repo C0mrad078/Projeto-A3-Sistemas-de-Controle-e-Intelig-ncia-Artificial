@@ -75,6 +75,7 @@ def run_experiments(
     mode: str = "Aleatório",
     obstacle_count: int | None = None,
     custom_maze: Maze | None = None,
+    custom_batch: bool = False,
     progress_callback: ProgressCallback | None = None,
 ) -> tuple[ExperimentRecord, ...]:
     """Executa um lote com os mesmos cenários para BFS e A*.
@@ -83,8 +84,10 @@ def run_experiments(
     o mesmo objeto imutável de labirinto, mas cria seu próprio estado inicial,
     energia e máscara de recargas.
     """
-    if batch_size not in ALLOWED_BATCH_SIZES:
+    if batch_size not in ALLOWED_BATCH_SIZES and not custom_batch:
         raise ValueError("O lote deve conter 10, 30 ou 50 labirintos.")
+    if custom_batch and not 1 <= batch_size <= 100:
+        raise ValueError("A quantidade personalizada deve estar entre 1 e 100 cenários.")
     validate_mode(mode)
     if mode == "Personalizado" and custom_maze is None and obstacle_count is None:
         raise ValueError("O modo Personalizado precisa de um mapa ou de uma quantidade de obstáculos.")
