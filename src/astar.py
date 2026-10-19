@@ -31,6 +31,7 @@ def a_star_search(
     best_g: dict[State, int] = {initial: initial_g}
     parents: dict[State, State | None] = {initial: None}
     explored_states = 0
+    explored_sequence: list[State] = []
     final_state: State | None = None
 
     while frontier:
@@ -39,6 +40,7 @@ def a_star_search(
             continue
 
         explored_states += 1
+        explored_sequence.append(current)
         if current.position == maze.goal:
             final_state = current
             break
@@ -68,5 +70,6 @@ def a_star_search(
         final_state=final_state,
         parents=parents,
         explored_states=explored_states,
+        explored_sequence=tuple(explored_sequence),
         started_at=started_at,
     )

@@ -44,6 +44,7 @@ def build_result(
     final_state: State | None,
     parents: Mapping[State, State | None],
     explored_states: int,
+    explored_sequence: tuple[State, ...],
     started_at: float,
 ) -> SearchResult:
     """Cria um resultado uniforme para sucesso ou ausência de solução."""
@@ -59,6 +60,7 @@ def build_result(
             recharges_consumed=(),
             execution_time_ms=execution_time_ms,
             state_sequence=(),
+            explored_sequence=explored_sequence,
         )
 
     states = reconstruct_states(parents, final_state)
@@ -73,6 +75,7 @@ def build_result(
         recharges_consumed=consumed_recharges(maze, final_state.recharge_mask),
         execution_time_ms=execution_time_ms,
         state_sequence=states,
+        explored_sequence=explored_sequence,
     )
 
 

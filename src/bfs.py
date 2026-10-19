@@ -25,11 +25,13 @@ def breadth_first_search(
     visited = {initial}
     parents: dict[State, State | None] = {initial: None}
     explored_states = 0
+    explored_sequence: list[State] = []
     final_state: State | None = None
 
     while frontier:
         current = frontier.popleft()
         explored_states += 1
+        explored_sequence.append(current)
 
         if current.position == maze.goal:
             final_state = current
@@ -49,5 +51,6 @@ def breadth_first_search(
         final_state=final_state,
         parents=parents,
         explored_states=explored_states,
+        explored_sequence=tuple(explored_sequence),
         started_at=started_at,
     )

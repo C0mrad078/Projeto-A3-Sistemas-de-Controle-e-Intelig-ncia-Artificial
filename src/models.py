@@ -48,6 +48,7 @@ class SearchResult:
     recharges_consumed: tuple[Position, ...]
     execution_time_ms: float
     state_sequence: tuple[State, ...]
+    explored_sequence: tuple[State, ...] = ()
 
     def __post_init__(self) -> None:
         if self.explored_states < 0:
