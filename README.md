@@ -5,16 +5,17 @@ Projeto acadêmico da AV3 de Sistemas de Controle e Inteligência Artificial (Un
 ## Requisitos e execução
 
 - Python 3.11 ou superior;
+- Streamlit, Pandas e Matplotlib para a aplicação e os gráficos;
 - `pytest` para os testes automatizados.
 
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python app.py --seed 42 --obstacles 10
+.venv/bin/streamlit run app.py
 .venv/bin/python -m pytest
 ```
 
-O comando da aplicação gera um cenário reproduzível e executa os dois algoritmos com a mesma configuração. O núcleo também pode ser usado diretamente:
+O dashboard abre localmente e permite gerar cenários, executar algoritmos, comparar resultados e iniciar lotes experimentais. O núcleo também pode ser usado diretamente:
 
 ```python
 from app import run_algorithms
@@ -44,6 +45,18 @@ Não existe limite máximo artificial de energia. A chegada ao objetivo com ener
 - Os dois algoritmos expandem somente os vizinhos do estado que está sendo processado; não há caminho pré-calculado.
 - `SearchResult` registra algoritmo, sucesso, movimentos, estados completos expandidos, energia final, caminho, recargas, tempo em milissegundos e sequência de estados para animação futura. Métricas dependentes da chegada ficam nulas quando não há solução.
 
+## Interface e experimentos
+
+O dashboard possui três abas:
+
+- **Simulador:** controles de semente, obstáculos, algoritmo e velocidade; visualização do labirinto; métricas; animação da expansão virtual e do percurso físico.
+- **Comparação BFS × A*:** executa os dois algoritmos no mesmo mapa e reinicializa energia e recargas de cada execução.
+- **Experimentos:** executa lotes reproduzíveis de 10, 30 ou 50 labirintos, mostra progresso, tabelas, médias, taxa de sucesso e cinco gráficos comparativos.
+
+A expansão virtual é apresentada em azul e o caminho físico em roxo. A expansão não consome energia; somente a sequência de estados do caminho físico representa movimentos do robô.
+
+Os resultados podem ser baixados em CSV e os gráficos em PNG. O botão de persistência grava os dados reais em `results/experimentos.csv` e `results/comparacao.png`; esses artefatos gerados são ignorados pelo Git.
+
 ## Exploração simbólica e robô físico
 
 As buscas clássicas exploram virtualmente nós do espaço de estados: o mapa está disponível para a função de sucessores, mas cada expansão consulta apenas os quatro vizinhos do estado atual. Isso não representa um robô físico que já conhece todo o mapa. Um robô físico precisaria descobrir, durante o deslocamento, quais células existem e quais estão livres, mantendo um mapa parcial e tomando decisões online. Essa distinção será preservada em futuras interfaces e experimentos.
@@ -51,7 +64,7 @@ As buscas clássicas exploram virtualmente nós do espaço de estados: o mapa es
 ## Estrutura
 
 ```text
-app.py                 Execução programática e CLI
+app.py                 Ponto de entrada Streamlit e API programática
 src/models.py          Estado e resultado padronizado
 src/maze.py            Geração, validação e vizinhança
 src/energy.py          Transição única de energia
@@ -59,6 +72,12 @@ src/search.py          Heurística e reconstrução compartilhada
 src/bfs.py             Busca em Largura
 src/astar.py           Busca A*
 src/metrics.py         Medição de tempo
+src/experiments.py     Lotes reproduzíveis e registros tabulares
+src/analysis.py        Médias, filtros e gráficos comparativos
+src/visualization.py   Renderer do labirinto
+src/animation.py       Amostragem segura de frames
+src/export.py          Exportação CSV e PNG
+src/dashboard.py       Interface Streamlit
 tests/                 Testes de domínio e algoritmos
 docs/                  Documentação acadêmica
 results/               Espaço para resultados futuros

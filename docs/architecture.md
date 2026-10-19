@@ -40,3 +40,13 @@ Ela não inclui energia, bônus ou custos negativos. A reconstrução segue os p
 ## Limite da simulação de conhecimento
 
 Neste núcleo, “conhecer somente posições imediatamente adjacentes” significa que a função de sucessores consulta apenas as quatro células ortogonais do estado expandido. Como em buscas clássicas o mapa inteiro é fornecido ao simulador para responder essa consulta, a exploração dos nós é virtual. Um robô físico teria sensores, um mapa parcial e incerteza: descobriria obstáculos ao se deslocar e não poderia explorar virtualmente uma célula ainda não visitada. A futura camada de interface deve manter essa diferença explícita ao apresentar os resultados.
+
+## Interface web e estado
+
+`src.dashboard` mantém o labirinto atual em `st.session_state` e só o substitui quando o usuário aciona “Gerar labirinto”. Alterar algoritmo, velocidade, gráficos ou abas não gera obstáculos novos. Cada execução chama BFS ou A* com um novo estado inicial, energia inicial de 30 e máscara de recargas vazia.
+
+O renderer usa camadas distintas: células expandidas virtualmente, linha do percurso físico, posição atual do robô, obstáculos, entrada, saída e recargas. A animação amostra sequências longas apenas para reduzir atualizações da interface; o `SearchResult` original permanece completo e as métricas são calculadas antes da animação.
+
+## Experimentos e exportação
+
+O laboratório usa as sementes `seed_start + índice` e compartilha cada objeto `Maze` imutável entre BFS e A*. Os registros guardam semente, cenário, obstáculos, algoritmo, sucesso, movimentos, estados, energia, recargas e tempo. CSVs e PNGs disponibilizados pela interface são serializados diretamente desses registros e não contêm dados inventados.
