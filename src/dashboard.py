@@ -223,7 +223,9 @@ def _render_scenario_metadata(maze: Maze) -> None:
         f"Distância Manhattan: {indicators['distancia_manhattan']} · "
         f"Caminho geométrico ignorando energia: "
         f"{'sim' if indicators['caminho_geometrico_existe'] else 'não'} · "
-        f"Distância geométrica mínima: {_metric_value(indicators['distancia_geometrica_minima'])}"
+        f"Distância geométrica mínima: {_metric_value(indicators['distancia_geometrica_minima'])} · "
+        f"Energia adicional no caminho escolhido: "
+        f"{_metric_value(indicators['energia_adicional_necessaria'])}"
     )
     st.info(
         "Indicadores geométricos consideram apenas obstáculos. Um caminho geométrico "
