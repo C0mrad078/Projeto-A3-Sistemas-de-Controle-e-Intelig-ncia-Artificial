@@ -213,9 +213,9 @@ def render_classic_maze(
   <rect width=\"100%\" height=\"100%\" fill=\"#ffffff\"/>
   <text x=\"32\" y=\"40\" class=\"title\">{escaped_title}</text>
   <text x=\"32\" y=\"66\" class=\"subtitle\">Labirinto clássico · matriz 10 × 10 · entrada (1,1) · saída (10,10)</text>
-  <text x=\"{PANEL_X - 126}\" y=\"49\" class=\"panel-heading\">Energia</text>
-  <text x=\"{PANEL_X - 69}\" y=\"49\" class=\"panel-text\">{energy}/30</text>
-  {_svg_battery_icon(PANEL_X, 27)}
+  <text x=\"{PANEL_X}\" y=\"49\" class=\"panel-heading\">Energia</text>
+  <text x=\"{PANEL_X + 78}\" y=\"49\" class=\"panel-text\">{energy}/30</text>
+  {_svg_battery_icon(PANEL_X + 135, 27)}
   <rect x=\"{BOARD_X - 7}\" y=\"{BOARD_Y - 7}\" width=\"{BOARD_SIZE * CELL_SIZE + 14}\" height=\"{BOARD_SIZE * CELL_SIZE + 14}\" fill=\"#f8fafc\" stroke=\"#d1d5db\" stroke-width=\"2\"/>
   <g data-layer=\"grid\">{''.join(cells)}</g>
   <g data-layer=\"overlays\">{''.join(overlays)}</g>
