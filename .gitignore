@@ -14,3 +14,10 @@ env/
 results/*.json
 results/*.csv
 results/*.png
+
+# Artefatos finais reproduzíveis da entrega acadêmica.
+!results/experimentos_finais.csv
+!results/resumo_finais.csv
+!results/comparacao_lote_10.png
+!results/comparacao_lote_30.png
+!results/comparacao_lote_50.png
