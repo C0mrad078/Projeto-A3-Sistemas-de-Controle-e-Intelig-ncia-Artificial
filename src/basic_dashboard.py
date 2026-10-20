@@ -218,6 +218,9 @@ def render_basic_dashboard() -> None:
         [data-testid="stHeader"] { background: #ffffff; }
         section[data-testid="stSidebar"] { background: #f7f7f7; border-right: 1px solid #e5e7eb; }
         section[data-testid="stSidebar"] * { color: #1f2937; }
+        section[data-testid="stSidebar"] input { background: #ffffff; color: #1f2937; }
+        section[data-testid="stSidebar"] [data-baseweb="select"] > div { background: #ffffff; color: #1f2937; }
+        section[data-testid="stSidebar"] button { color: #1f2937 !important; }
         div[data-baseweb="tab-list"] { border-bottom-color: #d1d5db; }
         button[data-baseweb="tab"] { color: #374151; }
         .main-title { color: #1E3A8A; margin-bottom: 0; }
