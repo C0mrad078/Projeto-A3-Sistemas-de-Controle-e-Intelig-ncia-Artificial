@@ -17,6 +17,7 @@ import streamlit.components.v1 as components
 from .astar import a_star_search
 from .bfs import breadth_first_search
 from .classic_renderer import render_classic_maze
+from .futuristic_renderer import render_futuristic_maze
 from .maze import MAX_OBSTACLES, MIN_OBSTACLES, Maze
 from .models import SearchResult
 
@@ -38,6 +39,7 @@ def _initialize_session_state() -> None:
         "basic_obstacle_count": 15,
         "basic_algorithm": "BFS",
         "basic_animation_speed": "Normal",
+        "basic_theme": "Labirinto Clássico",
         "basic_results": {},
         "basic_comparison": None,
         "basic_active_result": None,
@@ -109,17 +111,23 @@ def _render_maze(maze: Maze, result: SearchResult | None = None) -> None:
     explored = tuple(state.position for state in result.explored_sequence) if result else ()
     path = result.path if result and result.found else ()
     robot_position = path[-1] if path else maze.start
-    svg = render_classic_maze(
-        maze,
-        explored_positions=explored,
-        path=path,
-        robot_position=robot_position,
-        title=("Solução encontrada" if result and result.found else "Robot Maze AI"),
-        algorithm=result.algorithm if result else "Aguardando execução",
-        moves=result.moves if result else None,
-        explored_states=result.explored_states if result else None,
-        energy=result.remaining_energy if result and result.found else 30,
-    )
+    renderer_arguments = {
+        "explored_positions": explored,
+        "path": path,
+        "robot_position": robot_position,
+        "algorithm": result.algorithm if result else "Aguardando execução",
+        "moves": result.moves if result else None,
+        "explored_states": result.explored_states if result else None,
+        "energy": result.remaining_energy if result and result.found else 30,
+    }
+    if st.session_state.basic_theme == "Laboratório Futurista":
+        svg = render_futuristic_maze(maze, **renderer_arguments)
+    else:
+        svg = render_classic_maze(
+            maze,
+            title=("Solução encontrada" if result and result.found else "Robot Maze AI"),
+            **renderer_arguments,
+        )
     components.html(svg, height=730, scrolling=False)
 
 
@@ -138,6 +146,12 @@ def _render_sidebar() -> None:
         "Velocidade da animação",
         tuple(ANIMATION_SPEEDS),
         key="basic_animation_speed",
+    )
+    st.sidebar.selectbox(
+        "Tema visual",
+        ("Labirinto Clássico", "Laboratório Futurista"),
+        key="basic_theme",
+        help="A aparência é estética e não altera o mapa nem os algoritmos.",
     )
     st.sidebar.divider()
 
