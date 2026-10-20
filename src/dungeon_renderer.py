@@ -183,8 +183,8 @@ def render_dungeon_maze(
   </style>
   <rect width=\"100%\" height=\"100%\" fill=\"url(#dungeon-bg)\"/>
   <rect x=\"18\" y=\"18\" width=\"{SVG_WIDTH - 36}\" height=\"{SVG_HEIGHT - 36}\" rx=\"34\" fill=\"none\" stroke=\"#5b5773\" stroke-width=\"3\"/>
-  <text x=\"{BOARD_X}\" y=\"42\" class=\"title\">DUNGEON PIXEL ART</text>
-  <text x=\"{BOARD_X + 365}\" y=\"42\" class=\"label\">{escaped_algorithm} · ENERGIA {energy}/30</text>
+  <text x=\"{BOARD_X}\" y=\"34\" class=\"title\">DUNGEON PIXEL ART</text>
+  <text x=\"{BOARD_X + 365}\" y=\"34\" class=\"label\">{escaped_algorithm} · ENERGIA {energy}/30</text>
   <rect x=\"{BOARD_X - 35}\" y=\"{BOARD_Y - 35}\" width=\"{BOARD_PIXELS + 70}\" height=\"{BOARD_PIXELS + 70}\" rx=\"14\" fill=\"#20263a\" stroke=\"#63758c\" stroke-width=\"6\"/>
   {_border()}
   <g data-layer=\"grid\">{''.join(cells)}</g>
