@@ -172,7 +172,7 @@ def render_futuristic_maze(
   <rect width=\"100%\" height=\"100%\" fill=\"url(#background-gradient)\"/>
   <rect x=\"14\" y=\"14\" width=\"{SVG_WIDTH - 28}\" height=\"{SVG_HEIGHT - 28}\" rx=\"30\" fill=\"none\" stroke=\"#46506e\" stroke-width=\"2\" opacity=\".8\"/>
   <text x=\"{BOARD_X}\" y=\"38\" class=\"title\">LABORATÓRIO FUTURISTA</text>
-  <text x=\"{BOARD_X + 394}\" y=\"38\" class=\"label\">{escaped_algorithm} · energia {energy}/30</text>
+  <text x=\"{BOARD_X + 450}\" y=\"38\" class=\"label\">{escaped_algorithm} · energia {energy}/30</text>
   <rect x=\"{BOARD_X + 560}\" y=\"25\" width=\"100\" height=\"10\" rx=\"5\" fill=\"#1a2741\" stroke=\"#4d668b\"/>
   <rect x=\"{BOARD_X + 560}\" y=\"25\" width=\"{bar_width}\" height=\"10\" rx=\"5\" fill=\"#63dce7\"/>
   <rect x=\"{BOARD_X - 9}\" y=\"{BOARD_Y - 9}\" width=\"{BOARD_PIXELS + 18}\" height=\"{BOARD_PIXELS + 18}\" rx=\"18\" fill=\"url(#frame-gradient)\" stroke=\"#1f3659\" stroke-width=\"7\"/>
