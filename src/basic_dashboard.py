@@ -128,7 +128,8 @@ def _render_maze(maze: Maze, result: SearchResult | None = None) -> None:
             title=("Solução encontrada" if result and result.found else "Robot Maze AI"),
             **renderer_arguments,
         )
-    components.html(svg, height=730, scrolling=False)
+    iframe_height = 850 if st.session_state.basic_theme == "Laboratório Futurista" else 730
+    components.html(svg, height=iframe_height, scrolling=False)
 
 
 def _render_sidebar() -> None:
