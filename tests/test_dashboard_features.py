@@ -60,3 +60,14 @@ def test_dashboard_exposes_forest_theme_without_changing_the_map() -> None:
     assert len(app.exception) == 0
     assert app.session_state.basic_maze == maze_before
     assert app.session_state.basic_theme == "Floresta"
+
+
+def test_dashboard_exposes_dungeon_theme_without_changing_the_map() -> None:
+    app = AppTest.from_file(str(APP_PATH), default_timeout=30).run()
+    maze_before = app.session_state.basic_maze
+
+    app.selectbox[2].select("Dungeon Pixel Art").run()
+
+    assert len(app.exception) == 0
+    assert app.session_state.basic_maze == maze_before
+    assert app.session_state.basic_theme == "Dungeon Pixel Art"

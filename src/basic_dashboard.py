@@ -19,6 +19,7 @@ from .bfs import breadth_first_search
 from .classic_renderer import render_classic_maze
 from .futuristic_renderer import render_futuristic_maze
 from .forest_renderer import render_forest_maze
+from .dungeon_renderer import render_dungeon_maze
 from .maze import MAX_OBSTACLES, MIN_OBSTACLES, Maze
 from .models import SearchResult
 
@@ -125,13 +126,19 @@ def _render_maze(maze: Maze, result: SearchResult | None = None) -> None:
         svg = render_futuristic_maze(maze, **renderer_arguments)
     elif st.session_state.basic_theme == "Floresta":
         svg = render_forest_maze(maze, **renderer_arguments)
+    elif st.session_state.basic_theme == "Dungeon Pixel Art":
+        svg = render_dungeon_maze(maze, **renderer_arguments)
     else:
         svg = render_classic_maze(
             maze,
             title=("Solução encontrada" if result and result.found else "Robot Maze AI"),
             **renderer_arguments,
         )
-    iframe_height = 850 if st.session_state.basic_theme in {"Laboratório Futurista", "Floresta"} else 730
+    iframe_height = 850 if st.session_state.basic_theme in {
+        "Laboratório Futurista",
+        "Floresta",
+        "Dungeon Pixel Art",
+    } else 730
     components.html(svg, height=iframe_height, scrolling=False)
 
 
@@ -153,7 +160,12 @@ def _render_sidebar() -> None:
     )
     st.sidebar.selectbox(
         "Tema visual",
-        ("Labirinto Clássico", "Laboratório Futurista", "Floresta"),
+        (
+            "Labirinto Clássico",
+            "Laboratório Futurista",
+            "Floresta",
+            "Dungeon Pixel Art",
+        ),
         key="basic_theme",
         help="A aparência é estética e não altera o mapa nem os algoritmos.",
     )
