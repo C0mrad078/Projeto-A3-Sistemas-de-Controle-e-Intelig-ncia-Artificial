@@ -9,6 +9,7 @@ venv/
 env/
 .env
 .DS_Store
+.playwright-cli/
 
 # Resultados gerados localmente; mantenha apenas a estrutura versionada.
 results/*.json
