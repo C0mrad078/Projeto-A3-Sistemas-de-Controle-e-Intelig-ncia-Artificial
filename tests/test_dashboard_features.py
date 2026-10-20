@@ -49,3 +49,14 @@ def test_dashboard_theme_change_preserves_the_logical_maze() -> None:
     assert len(app.exception) == 0
     assert app.session_state.basic_maze == maze_before
     assert app.session_state.basic_theme == "Laboratório Futurista"
+
+
+def test_dashboard_exposes_forest_theme_without_changing_the_map() -> None:
+    app = AppTest.from_file(str(APP_PATH), default_timeout=30).run()
+    maze_before = app.session_state.basic_maze
+
+    app.selectbox[2].select("Floresta").run()
+
+    assert len(app.exception) == 0
+    assert app.session_state.basic_maze == maze_before
+    assert app.session_state.basic_theme == "Floresta"
